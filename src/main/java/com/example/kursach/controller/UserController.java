@@ -24,7 +24,7 @@ public class UserController {
     @Autowired
     public UserRepository userRepository;
     @PutMapping("/{id}")
-    public String updateUser(@RequestParam("id")  Long id,
+    public ResponseEntity<?> updateUser(@RequestParam("id")  Long id,
                              @RequestParam("username") String username,
                              @RequestParam("email") String email,
                              @RequestParam("phone") Long phone,
@@ -35,7 +35,7 @@ public class UserController {
     }
 
     @DeleteMapping("/delete/{username}")
-    public String deleteUser(@PathVariable("username") String username, @AuthenticationPrincipal UserDetails userDetails){
+    public ResponseEntity<?> deleteUser(@PathVariable("username") String username, @AuthenticationPrincipal UserDetails userDetails){
         String loadName = userDetails.getUsername();
         return userService.deleteUser(username, loadName);
     }
@@ -44,12 +44,5 @@ public class UserController {
     public ResponseEntity<?> getInfo(@PathVariable("username") String username, @AuthenticationPrincipal UserDetails userDetails){
         String loadName = userDetails.getUsername();
         return userService.getInfo(username, loadName);
-    }
-    //TODO ТЕСТОВАЯ ФИГНЯ, ПОЗЖЕ УДАЛИТЬ
-    @GetMapping("/user")
-    public String getUserInfo(@AuthenticationPrincipal UserDetails userDetails) {
-        String username = userDetails.getUsername(); // получить имя пользователя
-        Collection<? extends GrantedAuthority> authorities = userDetails.getAuthorities(); // получить роли пользователя
-        return "User: " + username;
     }
 }

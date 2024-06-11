@@ -2,6 +2,7 @@ package com.example.kursach.controller;
 
 import com.example.kursach.entity.Product;
 import com.example.kursach.service.ProductService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -19,31 +20,30 @@ public class ProductController {
     }
 
     @GetMapping("/{id}")
-    public Product getProduct(@PathVariable("id") Long id){
+    public ResponseEntity<?> getProduct(@PathVariable("id") Long id){
         return productService.getProduct(id);
     }
 
     @GetMapping("/getall")
-    public List<Product> getAllProducts(){
+    public ResponseEntity<List<Product>> getAllProducts(){
         return productService.getAllProducts();
     }
 
     @PostMapping
-    public String createProduct(@RequestParam("id")  Long id,
-                                @RequestParam("brand") String brand,
-                                @RequestParam("category") String category,
-                                @RequestParam("description") String description,
-                                @RequestParam("image_name") String image_name,
-                                @RequestParam("name") String name,
-                                @RequestParam("price") Double price,
-                                @AuthenticationPrincipal UserDetails userDetails){
+    public ResponseEntity<?> createProduct(@RequestParam("id")  Long id,
+                                                  @RequestParam("brand") String brand,
+                                                  @RequestParam("category") String category,
+                                                  @RequestParam("description") String description,
+                                                  @RequestParam("image_name") String image_name,
+                                                  @RequestParam("name") String name,
+                                                  @RequestParam("price") Double price,
+                                                  @AuthenticationPrincipal UserDetails userDetails){
         String loadName = userDetails.getUsername();
-        productService.createProduct(id, brand, category, description, image_name, name, price, loadName);
-        return "Продукт успешно сохранён";
+        return productService.createProduct(id, brand, category, description, image_name, name, price, loadName);
     }
 
     @PutMapping("/update")
-    public String updateProduct(@RequestParam("id")  Long id,
+    public ResponseEntity<?> updateProduct(@RequestParam("id")  Long id,
                                 @RequestParam("brand") String brand,
                                 @RequestParam("category") String category,
                                 @RequestParam("description") String description,
@@ -56,7 +56,7 @@ public class ProductController {
     }
 
     @DeleteMapping("/delete/{id}")
-    public String deleteProduct(@PathVariable("id") Long id, @AuthenticationPrincipal UserDetails userDetails){
+    public ResponseEntity<?> deleteProduct(@PathVariable("id") Long id, @AuthenticationPrincipal UserDetails userDetails){
         String loadName = userDetails.getUsername();
         return productService.deleteProduct(id, loadName);
     }

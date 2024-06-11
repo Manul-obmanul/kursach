@@ -6,10 +6,10 @@ import com.example.kursach.repository.UserRepository;
 import com.example.kursach.repository.UserRolesRepository;
 import com.example.kursach.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -26,12 +26,12 @@ public class ProductServiceImpl implements ProductService {
         this.productRepository = productRepository;
     }
     @Override
-    public Product getProduct(Long id) {
-        return productRepository.findById(id).get();
+    public ResponseEntity<?> getProduct(Long id) {
+        return ResponseEntity.ok(productRepository.findById(id).get());
     }
 
     @Override
-    public String createProduct(Long id, String brand, String category, String description, String image_name,String name,Double price, String loadName) {
+    public ResponseEntity<?> createProduct(Long id, String brand, String category, String description, String image_name,String name,Double price, String loadName) {
         Optional<User> user = userRepository.findByUsername(loadName);
         Optional<UserRole> userRole = Optional.ofNullable(userRolesRepository.findByUserId(user.get().getId()));
         if(userRole.get().getUserAuthority().equals(UserAuthority.MANAGE_ORDERS) ||userRole.get().getUserAuthority().equals(UserAuthority.FULL)) {
@@ -46,12 +46,12 @@ public class ProductServiceImpl implements ProductService {
                         .price(price)
                         .build();
                 productRepository.save(product);
-                return "Продукт успешно сохранён";
-        } else return "Убедитесь, что Вы обладаете правами на создание продуктов";
+                return ResponseEntity.ok(product);
+        } else return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Убедитесь, что Вы обладаете правами на создание продуктов");
     }
 
     @Override
-    public String updateProduct(Long id, String brand, String category, String description, String image_name,String name,Double price, String loadName) {
+    public ResponseEntity<?> updateProduct(Long id, String brand, String category, String description, String image_name,String name,Double price, String loadName) {
         Optional<User> user = userRepository.findByUsername(loadName);
         Optional<Product> product = productRepository.findById(id);
         Optional<UserRole> userRole = Optional.ofNullable(userRolesRepository.findByUserId(user.get().getId()));
@@ -68,27 +68,27 @@ public class ProductServiceImpl implements ProductService {
                         .price(price)
                         .build();
                 productRepository.save(updatedProduct);
-                return "Покупка успешно изменена";
-            } else return "Убедитесь, что Вы обладаете правами на изменение продуктов";
-        } else return "Убедитесь, что Вы пытаетесь изменить существующий продукт";
+                return ResponseEntity.ok(updatedProduct);
+            } else return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Убедитесь, что Вы обладаете правами на изменение продуктов");
+        } else return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Убедитесь, что Вы пытаетесь изменить существующий продукт");
     }
 
     @Override
-    public String deleteProduct(Long id, String loadName) {
+    public ResponseEntity<?> deleteProduct(Long id, String loadName) {
         Optional<Product> product = productRepository.findById(id);
         Optional<User> user = userRepository.findByUsername(loadName);
         Optional<UserRole> userRole = Optional.ofNullable(userRolesRepository.findByUserId(user.get().getId()));
         if (product.isPresent()&& userRole.isPresent()) {
             if(userRole.get().getUserAuthority().equals(UserAuthority.MANAGE_ORDERS) ||userRole.get().getUserAuthority().equals(UserAuthority.FULL)) {
                 productRepository.deleteById(id);
-                return "Продукт успешно удалён";
-            } else return "Убедитесь, что Вы обладаете правами на удаление продуктов";
-        } else return "Убедитесь, что Вы пытаетесь удалить существующий продукт";
+                return ResponseEntity.ok(product.get());
+            } else return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Убедитесь, что Вы обладаете правами на удаление продуктов");
+        } else return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Убедитесь, что Вы пытаетесь удалить существующий продукт");
     }
 
     @Override
-    public List<Product> getAllProducts() {//TODO ВЫВОД СООБЩЕНИЕ О ПУСТОМ ЛИСТЕ
+    public ResponseEntity<List<Product>> getAllProducts() {
         List<Product> products = productRepository.findAll();
-        return products;
+        return ResponseEntity.ofNullable(products);
     }
 }

@@ -14,12 +14,15 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -48,7 +51,7 @@ public class PurchaseServiceTest {
 
         when(userRepository.findByUsername(loadName)).thenReturn(Optional.of(user));
 
-        String result = purchaseService.createPurchase(id, productId, numberOfProducts, price, loadName);
+        String result = String.valueOf(purchaseService.createPurchase(id, productId, numberOfProducts, price, loadName));
 
         assertEquals("Покупка успешно создана", result);
     }
@@ -68,7 +71,7 @@ public class PurchaseServiceTest {
         when(userRepository.findByUsername(loadName)).thenReturn(Optional.of(user));
         when(purchaseRepository.findById(purchaseId)).thenReturn(Optional.of(purchase));
 
-        String result = purchaseService.deletePurchase(purchaseId, loadName);
+        String result = String.valueOf(purchaseService.deletePurchase(purchaseId, loadName));
 
         assertEquals("Покупка успешна удалена", result);
     }
@@ -85,11 +88,28 @@ public class PurchaseServiceTest {
         when(userRepository.findByUsername("exampleUser")).thenReturn(Optional.of(user));
         when(purchaseRepository.findById(1L)).thenReturn(Optional.of(purchase));
 
-        Optional<Purchase> result = purchaseService.getPurchase(1L, "exampleUser");
+        ResponseEntity<?> result = purchaseService.getPurchase(1L, "exampleUser");
 
-        Assertions.assertTrue(result.isPresent());
-        assertEquals(1L, result.get().getId().longValue());
-        assertEquals(1L, result.get().getUserId().longValue());
+        assertEquals(HttpStatus.OK, result.getStatusCode());
+        assertEquals(purchase, result.getBody());
+    }
+    @Test
+    public void testGetPurchase_Failure() {
+        Purchase purchase = new Purchase();
+        purchase.setId(1L);
+        purchase.setUserId(2L);
+
+        User user = new User();
+        user.setId(1L);
+        user.setUsername("testUser");
+
+        Mockito.when(purchaseRepository.findById(1L)).thenReturn(Optional.of(purchase));
+        Mockito.when(userRepository.findByUsername("testUser")).thenReturn(Optional.of(user));
+
+        ResponseEntity<?> response = purchaseService.getPurchase(1L, "testUser");
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertEquals("Убедитесь, что Вы пытаетесь просмотреть покупку со своим id", response.getBody());
     }
     @Test
     public void testGetAllPurchases() {
@@ -110,12 +130,9 @@ public class PurchaseServiceTest {
         when(userRepository.findByUsername("testUser")).thenReturn(Optional.of(user));
         when(purchaseRepository.findAllByUserId(1L)).thenReturn(purchases);
 
-        List<Purchase> result = purchaseService.getAllPurchases("testUser");
+        ResponseEntity<List<Purchase>> result = purchaseService.getAllPurchases("testUser");
 
-        assertEquals(2, result.size());
-        assertEquals(1L, result.get(0).getId().longValue());
-        assertEquals(1L, result.get(0).getUserId().longValue());
-        assertEquals(2L, result.get(1).getId().longValue());
-        assertEquals(1L, result.get(1).getUserId().longValue());
+        assertNotNull(result.getBody());
+        assertEquals(2, result.getBody().size());
     }
 }

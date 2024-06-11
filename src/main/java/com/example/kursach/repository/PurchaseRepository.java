@@ -10,4 +10,5 @@ import java.util.Optional;
 public interface PurchaseRepository extends CrudRepository<Purchase, Long> {
     Optional<Purchase> findByUserId(Long aLong);
     public List<Purchase> findAllByUserId(Long id);
+    public void deleteAllByUserId(Long id);
 }

@@ -5,6 +5,7 @@ import com.example.kursach.entity.User;
 import com.example.kursach.entity.UserAuthority;
 import com.example.kursach.entity.UserRole;
 import com.example.kursach.repository.ProductRepository;
+import com.example.kursach.repository.PurchaseRepository;
 import com.example.kursach.repository.UserRepository;
 import com.example.kursach.repository.UserRolesRepository;
 import com.example.kursach.service.impl.ProductServiceImpl;
@@ -17,9 +18,6 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Optional;
 
@@ -33,11 +31,12 @@ public class ProductServiceTest {
     public void setup(){
         userRepository = Mockito.mock(UserRepository.class);
         userRolesRepository = Mockito.mock(UserRolesRepository.class);
-        userService = new UserServiceImpl(userRepository, userRolesRepository);
+        userService = new UserServiceImpl(userRepository, userRolesRepository, purchaseRepository);
         productService = new ProductServiceImpl(productRepository);
     }
     @Mock
     UserRepository userRepository;
+    PurchaseRepository purchaseRepository;
     UserServiceImpl userService;
     @Mock
     UserRolesRepository userRolesRepository;
@@ -50,7 +49,7 @@ public class ProductServiceTest {
         MockitoAnnotations.initMocks(this);
         UserRepository userRepository = mock(UserRepository.class);
         UserRolesRepository userRolesRepository = mock(UserRolesRepository.class);
-        UserServiceImpl userService = new UserServiceImpl(userRepository, userRolesRepository);
+        UserServiceImpl userService = new UserServiceImpl(userRepository, userRolesRepository, purchaseRepository);
         User user = new User();
         user.setUsername("test"); user.setPassword("test");
         userRepository.save(user);
@@ -60,7 +59,7 @@ public class ProductServiceTest {
         userRole.setUserAuthority(UserAuthority.MANAGE_ORDERS);
         lenient().when(userRolesRepository.findByUserId(user.getId())).thenReturn(userRole);
 
-        String result = productService.createProduct(1L, "Brand", "Category", "Description", "image.jpg", "Product", 100.0, "testUser");
+        String result = String.valueOf(productService.createProduct(1L, "Brand", "Category", "Description", "image.jpg", "Product", 100.0, "testUser"));
 
         assertEquals("Продукт успешно сохранён", result);
         verify(productRepository, times(1)).save(any(Product.class));
@@ -69,7 +68,7 @@ public class ProductServiceTest {
     public void testUpdateProduct() {
         UserRepository userRepository = mock(UserRepository.class);;
         UserRolesRepository userRolesRepository = mock(UserRolesRepository.class);;
-        UserServiceImpl userService = new UserServiceImpl(userRepository, userRolesRepository);
+        UserServiceImpl userService = new UserServiceImpl(userRepository, userRolesRepository, purchaseRepository);
         Long id = 1L;
         String brand = "brand";
         String category = "category";
@@ -87,7 +86,7 @@ public class ProductServiceTest {
         product.setBrand("oldBrand");
         lenient().when(productRepository.findById(id)).thenReturn(Optional.of(product));
 
-        String result = productService.updateProduct(id, brand, category, description, image_name, name, price, "testUser");
+        String result = String.valueOf(productService.updateProduct(id, brand, category, description, image_name, name, price, "testUser"));
 
         assertEquals("Покупка успешно изменена", result);
         assertThat(product.getBrand()).isEqualTo("oldBrand");
@@ -96,7 +95,7 @@ public class ProductServiceTest {
     public void deleteProductTest() {
         UserRepository userRepository = mock(UserRepository.class);;
         UserRolesRepository userRolesRepository = mock(UserRolesRepository.class);;
-        UserServiceImpl userService = new UserServiceImpl(userRepository, userRolesRepository);
+        UserServiceImpl userService = new UserServiceImpl(userRepository, userRolesRepository, purchaseRepository);
         Product product = new Product();
         product.setId(1L);
 
@@ -113,7 +112,7 @@ public class ProductServiceTest {
         when(userRolesRepository.findByUserId(1L)).thenReturn(userRole);
 
 
-        String result = productService.deleteProduct(1L, "testUser");
+        String result = String.valueOf(productService.deleteProduct(1L, "testUser"));
 
         assertEquals("Продукт успешно удалён", result);
     }

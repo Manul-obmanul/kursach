@@ -47,7 +47,7 @@ public class UserServiceTest {
         lenient().when(userRepository.findByUsername("user")).thenReturn(Optional.of(user));
         lenient().when(userRolesRepository.findByUserId(15L)).thenReturn(userRole);
 
-        String result = userService.deleteUser("user",  "admin");
+        String result = String.valueOf(userService.deleteUser("user",  "admin"));
 
         assertEquals("Пользователь успешно удалён", result);
         verify(userRepository, times(1)).deleteById(1L);
@@ -89,7 +89,7 @@ public class UserServiceTest {
                 .build();
         when(userRepository.findByUsername("admin")).thenReturn(Optional.of(user));
 
-        String result = userService.updateUser(1L, "newadmin", "newadmin@example.com", 9876543210L, "newpassword", "admin");
+        String result = String.valueOf(userService.updateUser(1L, "newadmin", "newadmin@example.com", 9876543210L, "newpassword", "admin"));
 
         assertEquals("Пользователь успешно изменён", result);
     }
@@ -108,7 +108,7 @@ public class UserServiceTest {
                 .build();
         lenient().when(userRepository.findByUsername("user")).thenReturn(Optional.of(user));
 
-        String result = userService.updateUser(2L, "newuser", "newuser@example.com", 1234567890L, "newpassword", "user1");
+        String result = String.valueOf(userService.updateUser(2L, "newuser", "newuser@example.com", 1234567890L, "newpassword", "user1"));
 
         assertEquals("Убедитесь, что Вы вводите верный username или обладаете правами на изменение других пользователей", result);
     }

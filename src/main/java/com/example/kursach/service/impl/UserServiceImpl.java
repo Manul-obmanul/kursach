@@ -4,6 +4,7 @@ import com.example.kursach.entity.User;
 import com.example.kursach.entity.UserAuthority;
 import com.example.kursach.entity.UserRole;
 import com.example.kursach.exception.UsernameAlreadyExistsException;
+import com.example.kursach.repository.PurchaseRepository;
 import com.example.kursach.repository.UserRepository;
 import com.example.kursach.repository.UserRolesRepository;
 import com.example.kursach.service.UserService;
@@ -22,6 +23,7 @@ import java.util.Optional;
 public class UserServiceImpl implements UserService {
     public final UserRepository userRepository;
     private final UserRolesRepository userRolesRepository;
+    private  final PurchaseRepository purchaseRepository;
     @Autowired
     public PasswordEncoder encoder;
     @Override
@@ -44,18 +46,19 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public String deleteUser(String username, String loadName) {
+    public ResponseEntity<?> deleteUser(String username, String loadName) {
         Optional<User> user = userRepository.findByUsername(loadName);
         Optional<UserRole> userRole = Optional.ofNullable(userRolesRepository.findByUserId(user.get().getId()));
-        if(user.isPresent() && userRole.isPresent()) {
+        if(user.get().getUsername().equals(username) || userRole.get().getUserAuthority().equals(UserAuthority.FULL)) {
             if(userRole.get().getUserAuthority().equals(UserAuthority.FULL) || user.get().getUsername().equals(username)) {
                 userRepository.deleteById(userRepository.findByUsername(username).get().getId());
-                return "Пользователь успешно удалён";
-            } else return "Убедитесь, что Вы  вводите верный username";
-        } else return "Убедитесь, что Вы вошли в аккаунт";
+                purchaseRepository.deleteAllByUserId(user.get().getId());
+                return ResponseEntity.ok("Пользователь успешно удалён");
+            } else return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Убедитесь, что Вы  вводите верный username");
+        } else return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Убедитесь, что Вы обладаете правами а удаление аккаунтов или вводится свой username");
     }
     @Override
-    public String updateUser(Long id, String username, String email, Long phone, String password, String loadName) {
+    public ResponseEntity<?> updateUser(Long id, String username, String email, Long phone, String password, String loadName) {
         Optional<User> user = userRepository.findByUsername(loadName);
         Optional<UserRole> userRole = Optional.ofNullable(userRolesRepository.findByUserId(user.get().getId()));
         if(user.get().getUsername().equals(username) || userRole.get().getUserAuthority().equals(UserAuthority.FULL)) {
@@ -69,11 +72,10 @@ public class UserServiceImpl implements UserService {
                         .expired(false)
                         .locked(false)
                         .build();
-                updatedUser.setUserRoles(user.get().getUserRoles());
+                    updatedUser.setUserRoles(user.get().getUserRoles());
                 userRepository.save(updatedUser);
-                return "Пользователь успешно изменён";
-        } else return "Убедитесь, что Вы  вводите верный email или обладаете правами на изменение других пользователей";
-
+                return ResponseEntity.ok(updatedUser);
+        } else return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Убедитесь, что Вы  вводите верный username или обладаете правами на изменение других пользователей");
     }
     @Override
     public ResponseEntity<?> getInfo(String username, String loadName){

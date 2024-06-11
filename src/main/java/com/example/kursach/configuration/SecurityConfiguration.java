@@ -29,7 +29,7 @@ public class SecurityConfiguration {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.authorizeHttpRequests(expressionInterceptUrlRegistry ->
                         expressionInterceptUrlRegistry
-                                .requestMatchers("/registration", "/products/{id}", "/products/getall", "/users/**").permitAll()
+                                .requestMatchers("/registration", "/products/{id}", "/products/getall", "/users/**", "/review/**").permitAll()
                                 .requestMatchers("/purchases/*", "/users/getInfo/**").hasAuthority(UserAuthority.PLACE_ORDERS.getAuthority())
                                 .requestMatchers(HttpMethod.DELETE, "/products/**", "/purchases/**").hasAuthority(UserAuthority.MANAGE_ORDERS.getAuthority())
                                 .requestMatchers(HttpMethod.PUT, "/products/**", "/purchases/**").hasAuthority(UserAuthority.MANAGE_ORDERS.getAuthority())

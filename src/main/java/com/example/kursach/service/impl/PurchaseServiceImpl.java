@@ -7,6 +7,8 @@ import com.example.kursach.repository.UserRepository;
 import com.example.kursach.repository.UserRolesRepository;
 import com.example.kursach.service.PurchaseService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -22,7 +24,7 @@ public class PurchaseServiceImpl implements PurchaseService {
     public UserRolesRepository userRolesRepository;
 
     @Override
-    public String createPurchase(Long id, Long productId, Integer numberOfProducts, Double price, String loadName) {
+    public ResponseEntity<Purchase> createPurchase(Long id, Long productId, Integer numberOfProducts, Double price, String loadName) {
         Optional<User> user = userRepository.findByUsername(loadName);
             Purchase purchase = Purchase.builder()
                     .id(id)
@@ -33,20 +35,20 @@ public class PurchaseServiceImpl implements PurchaseService {
                     .dateOfPurchase(LocalDate.now())
                     .build();
             purchaseRepository.save(purchase);
-            return "Покупка успешно создана";
+            return ResponseEntity.ok(purchase);
     }
 
     @Override
-    public String deletePurchase(Long id, String loadName) {
+    public ResponseEntity<?> deletePurchase(Long id, String loadName) {
         Optional<User> user = userRepository.findByUsername(loadName);
         Optional<Purchase> purchase = purchaseRepository.findById(id);
         if (purchase.isPresent() && user.get().getId() == purchase.get().getUserId()) {
             purchaseRepository.deleteById(id);
-            return "Покупка успешна удалена";
-        } else return "Убедитесь, что Вы вводите правильный id покупки";
+            return ResponseEntity.ok("Покупка успешна удалена");
+        } else return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Убедитесь, что Вы вводите правильный id покупки");
     }
     @Override
-    public String updatePurchase(Long id, Long productId, Integer numberOfProducts, Double price, String loadName) {
+    public ResponseEntity<?> updatePurchase(Long id, Long productId, Integer numberOfProducts, Double price, String loadName) {
         Optional<User> user = userRepository.findByUsername(loadName);
         Optional<Purchase> purchase = purchaseRepository.findById(id);
         if (purchase.isPresent() && purchase.get().getUserId() == user.get().getId()) {
@@ -59,27 +61,24 @@ public class PurchaseServiceImpl implements PurchaseService {
                     .price(price)
                     .build();
             purchaseRepository.save(updatedPurchase);
-            return "Покупка успешно изменена";
-        } else return "Убедитесь, что Вы пытаетесь изменить покупку со своим id";
+            return ResponseEntity.ok(updatedPurchase);
+        } else return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Убедитесь, что Вы пытаетесь изменить покупку со своим id");
     }
 
     @Override
-    public Optional<Purchase> getPurchase(Long id, String loadName) {
+    public ResponseEntity<?> getPurchase(Long id, String loadName) {
         Optional<Purchase> purchase = purchaseRepository.findById(id);
         Optional<User> user = userRepository.findByUsername(loadName);
         if(purchase.isPresent() && user.get().getId() == purchase.get().getUserId()){
-            return purchase;
-        } else throw new RuntimeException("Убедитесь, что Вы пытаетесь просмотреть покупку со своим id");
+            return ResponseEntity.ok(purchase.get());
+        } else return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Убедитесь, что Вы пытаетесь просмотреть покупку со своим id");
     }
 
     @Override
-    public List<Purchase> getAllPurchases(String loadName){
+    public ResponseEntity<List<Purchase>> getAllPurchases(String loadName){
         Optional<User> user = userRepository.findByUsername(loadName);
         List<Purchase> purchases = null;
-            purchases = purchaseRepository.findAllByUserId(user.get().getId());
-        if (purchases == null) {
-            throw new RuntimeException("Вы еще не создали ни одной покупки");
-        }
-        return purchases;
+        purchases = purchaseRepository.findAllByUserId(user.get().getId());
+        return ResponseEntity.ofNullable(purchases);
     }
 }
