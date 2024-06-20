@@ -2,6 +2,7 @@ package com.example.kursach.service.impl;
 
 import com.example.kursach.entity.Purchase;
 import com.example.kursach.entity.User;
+import com.example.kursach.repository.ProductRepository;
 import com.example.kursach.repository.PurchaseRepository;
 import com.example.kursach.repository.UserRepository;
 import com.example.kursach.repository.UserRolesRepository;
@@ -22,16 +23,18 @@ public class PurchaseServiceImpl implements PurchaseService {
     public UserRepository userRepository;
     @Autowired
     public UserRolesRepository userRolesRepository;
+    @Autowired
+    public ProductRepository productRepository;
 
     @Override
-    public ResponseEntity<Purchase> createPurchase(Long id, Long productId, Integer numberOfProducts, Double price, String loadName) {
+    public ResponseEntity<Purchase> createPurchase(Long id, Long productId, Integer numberOfProducts, String loadName) {
         Optional<User> user = userRepository.findByUsername(loadName);
             Purchase purchase = Purchase.builder()
                     .id(id)
                     .productId(productId)
                     .numberOfProducts(numberOfProducts)
                     .userId(user.get().getId())
-                    .price(price)
+                    .price(productRepository.findById(productId).get().getPrice() * numberOfProducts)
                     .dateOfPurchase(LocalDate.now())
                     .build();
             purchaseRepository.save(purchase);
@@ -48,7 +51,7 @@ public class PurchaseServiceImpl implements PurchaseService {
         } else return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Убедитесь, что Вы вводите правильный id покупки");
     }
     @Override
-    public ResponseEntity<?> updatePurchase(Long id, Long productId, Integer numberOfProducts, Double price, String loadName) {
+    public ResponseEntity<?> updatePurchase(Long id, Long productId, Integer numberOfProducts, String loadName) {
         Optional<User> user = userRepository.findByUsername(loadName);
         Optional<Purchase> purchase = purchaseRepository.findById(id);
         if (purchase.isPresent() && purchase.get().getUserId() == user.get().getId()) {
@@ -58,7 +61,7 @@ public class PurchaseServiceImpl implements PurchaseService {
                     .numberOfProducts(numberOfProducts)
                     .userId(user.get().getId())
                     .dateOfPurchase(purchase.get().getDateOfPurchase())
-                    .price(price)
+                    .price(productRepository.findById(productId).get().getPrice() * numberOfProducts)
                     .build();
             purchaseRepository.save(updatedPurchase);
             return ResponseEntity.ok(updatedPurchase);

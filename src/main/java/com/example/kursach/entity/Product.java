@@ -27,6 +27,7 @@ public class Product {
     private String image_name;
     private String name;
     private Double price;
+    private Double rating;
 
     @JsonIgnore
     @Transient

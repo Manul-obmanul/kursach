@@ -10,6 +10,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,14 +19,19 @@ import java.util.Optional;
 public class ReviewServiceImpl implements ReviewService {
     @Autowired
     private ReviewRepository repository;
+    @Autowired
+    private ProductServiceImpl service;
     @Override
-    public ResponseEntity<Review> makeReview(Long productId, String text, String loadName) {
+    public ResponseEntity<Review> makeReview(Long productId, String text, Long rate, String loadName) {
         Review review = Review.builder()
                 .id(null)
                 .productId(productId)
                 .authorName(loadName)
                 .text(text)
+                .dateOfCreation(LocalDate.now())
+                .rate(rate)
                 .build();
+        service.updateRating(productId);
         return ResponseEntity.ok(review);
     }
 
@@ -40,18 +47,25 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
-    public ResponseEntity<?> updateReivew(Long id, String text, String loadName) {
+    public ResponseEntity<?> updateReivew(Long id, String text, Long rate, String loadName) {
         Optional<Review> review = repository.findById(id);
         if(review.isPresent()) {
             if (review.get().getAuthorName().equals(loadName)) {
-                Review updatedReview = Review.builder()
-                        .id(review.get().getId())
-                        .productId(review.get().getProductId())
-                        .authorName(loadName)
-                        .text(text)
-                        .build();
-                repository.save(updatedReview);
-                return ResponseEntity.ok(updatedReview);
+                LocalDate currentDate = LocalDate.now();
+                long days = ChronoUnit.DAYS.between(review.get().getDateOfCreation(), currentDate);
+                if (days > 1) {
+                    Review updatedReview = Review.builder()
+                            .id(review.get().getId())
+                            .productId(review.get().getProductId())
+                            .authorName(loadName)
+                            .text(text)
+                            .dateOfCreation(review.get().getDateOfCreation())
+                            .rate(rate)
+                            .build();
+                    repository.save(updatedReview);
+                    service.updateRating(review.get().getProductId());
+                    return ResponseEntity.ok(updatedReview);
+                } else return ResponseEntity.status(HttpStatus.FORBIDDEN).body("К сожалению, изменять отзыв больше нельзя");
             } else return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Убедитесь, что Вы пытаетесь изменить покупку со своим id");
         } else return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Убедитесь, что отзыв с таким id существует");
     }

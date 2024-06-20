@@ -60,4 +60,20 @@ public class ProductController {
         String loadName = userDetails.getUsername();
         return productService.deleteProduct(id, loadName);
     }
+
+    @GetMapping("/getbyprice")
+    public ResponseEntity<?> getByPrice(@RequestParam("minprice") Double min,
+                                        @RequestParam("maxprice") Double max){
+        return productService.getProductsByPrice(min, max);
+    }
+
+    @GetMapping("/getbybrand")
+    public ResponseEntity<?> getByBrand(@RequestParam("brand") String brand){
+        return productService.getProductsByBrand(brand);
+    }
+
+    @GetMapping("/getbyrating")
+    public ResponseEntity<?> getByRating(@RequestParam("rating") Double rating){
+        return productService.getProductsByRating(rating);
+    }
 }
